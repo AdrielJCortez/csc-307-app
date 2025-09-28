@@ -3,28 +3,12 @@
 // npm run dev
 import React, { useState } from "react";
 import Table from "./Table";
+import Form from "./Form"
 
 // using hooks such as useState() to implement state and other side-effects with functional components
 // characters is now owned by the myApp function
 function MyApp() {
-    const [characters, setCharacters] = useState([
-    {
-        name: "Charlie",
-        job: "Janitor"
-    },
-    {
-        name: "Mac",
-        job: "Bouncer"
-    },
-    {
-        name: "Dee",
-        job: "Aspring actress"
-    },
-    {
-        name: "Dennis",
-        job: "Bartender"
-    }
-    ]);
+    const [characters, setCharacters] = useState([]);
     
     // used to update the characters if we want one of them removed
     function removeOneCharacter(index){
@@ -40,6 +24,7 @@ function MyApp() {
             characterData={characters}
             removeOneCharacter={removeOneCharacter}
         />
+        <Form />
     </div>
     );
 }
