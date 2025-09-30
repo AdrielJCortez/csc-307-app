@@ -1,14 +1,11 @@
 {
   "name": "csc-307-app",
-  "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "workspaces": ["packages/*"],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "workspaces": [
-    "packages/*"
-  ]
+    "dev": "npm run dev -w react-frontend",
+    "start": "npm run dev -w react-frontend",
+    "build": "npm run build -w react-frontend",
+    "preview": "npm run preview -w react-frontend"
+  }
 }

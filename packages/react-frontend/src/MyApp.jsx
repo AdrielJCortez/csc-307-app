@@ -7,8 +7,13 @@ import Form from "./Form"
 
 // using hooks such as useState() to implement state and other side-effects with functional components
 // characters is now owned by the myApp function
+const DEFAULTS = [
+    { name: "Charlie", job: "Janitor" },
+    { name: "Mac", job: "Bouncer" },
+]
 function MyApp() {
-    const [characters, setCharacters] = useState([]);
+    const [characters, setCharacters] = useState(() => DEFAULTS);
+    // useState([])
     
     // used to update the characters if we want one of them removed
     function removeOneCharacter(index){
