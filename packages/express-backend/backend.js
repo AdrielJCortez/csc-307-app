@@ -1,4 +1,18 @@
 // backend.js
+// How to add:
+// curl -X POST http://localhost:8000/users ^
+//  -H "Content-Type: application/json" ^
+//  -d "{\"id\":\"qwe123\",\"name\":\"Cindy\",\"job\":\"Zookeeper\"}"
+// To confirm:
+// curl http://localhost:8000/users
+
+// How to Delete by id:
+// curl -X DELETE http://localhost:8000/users/qwe123
+// Verify List:
+// curl http://localhost:8000/users
+
+// "http://localhost:8000/users?name=Mac&job=Bouncer"
+
 import express from "express";
 
 const app = express();
@@ -38,8 +52,19 @@ const addUser = (user) => {
     return user;
 };
 
+const removeUser = (user) => {
+    const idx = users["users_list"].findIndex(u => u.id === id);
+    if (idx === -1)
+        return null;
+    const [removed] = users["users_list"].splice(idx, 1)
+    return removed;
+}
+
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
+
+const findUsersByNameAndJob = (name, job) =>
+    users["users_list"].filter((u) => u.name === name && u.job === job);
 
 app.use(express.json());
 
@@ -47,6 +72,18 @@ app.post("/users", (req, res) => {
     const userToAdd = req.body;
     addUser(userToAdd);
     res.send();
+});
+
+app.get("/users", (req, res) => {
+  const { name, job } = req.query;
+
+  if (name && job) {
+    return res.json({ users_list: findUsersByNameAndJob(name, job) });
+  } else {
+    res.status(404).send("Resource not found")
+  }
+  
+  return res.json(users); // all users
 });
 
 app.get("/", (req, res) => {
@@ -66,6 +103,14 @@ app.get("/users/:id", (req, res) => {
     res.send(result);
   }
 });
+
+app.delete("/users/:id", (req, res) => {
+    const id = req.params.id;
+    const removed = removeUser(id);
+    if (!removed) return res.status(404).send("Resource not found.");
+
+    res.status(200).json(removed)
+})
 
 app.listen(port, () => {
   console.log(
