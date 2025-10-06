@@ -14,6 +14,7 @@
 // "http://localhost:8000/users?name=Mac&job=Bouncer"
 
 import express from "express";
+import cors from "cors";
 
 const app = express();
 const port = 8000;
@@ -52,7 +53,7 @@ const addUser = (user) => {
     return user;
 };
 
-const removeUser = (user) => {
+const removeUser = (id) => {
     const idx = users["users_list"].findIndex(u => u.id === id);
     if (idx === -1)
         return null;
@@ -66,6 +67,7 @@ const findUserById = (id) =>
 const findUsersByNameAndJob = (name, job) =>
     users["users_list"].filter((u) => u.name === name && u.job === job);
 
+app.use(cors())
 app.use(express.json());
 
 app.post("/users", (req, res) => {
@@ -75,23 +77,18 @@ app.post("/users", (req, res) => {
 });
 
 app.get("/users", (req, res) => {
-  const { name, job } = req.query;
-
-  if (name && job) {
-    return res.json({ users_list: findUsersByNameAndJob(name, job) });
+  const name = req.query.name;
+  if (name != undefined) {
+    let result = findUserByName(name);
+    result = { users_list: result };
+    res.send(result);
   } else {
-    res.status(404).send("Resource not found")
+    res.send(users);
   }
-  
-  return res.json(users); // all users
 });
 
 app.get("/", (req, res) => {
   res.send("Hello world!");
-});
-
-app.get("/users", (req, res) => {
-    res.send(users);
 });
 
 app.get("/users/:id", (req, res) => {
