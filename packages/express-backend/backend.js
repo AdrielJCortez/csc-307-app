@@ -64,16 +64,30 @@ const removeUser = (id) => {
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
 
-const findUsersByNameAndJob = (name, job) =>
+const findUserByName = (name, job) =>
     users["users_list"].filter((u) => u.name === name && u.job === job);
+
+const idInUse = (id) => users["users_list"].some(u => u.id === id);
+const generateRandomId = () => {
+  let id;
+  do {
+    id = Math.random().toString(36).slice(2, 8);
+  } while (idInUse(id));
+  return id;
+}
 
 app.use(cors())
 app.use(express.json());
 
 app.post("/users", (req, res) => {
     const userToAdd = req.body;
+
+    if (!userToAdd.id){
+      userToAdd.id = generateRandomId();
+    }
+    
     addUser(userToAdd);
-    res.send();
+    return res.status(201).json(userToAdd);
 });
 
 app.get("/users", (req, res) => {

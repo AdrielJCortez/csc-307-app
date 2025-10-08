@@ -21,11 +21,22 @@ function MyApp() {
     }
     function updateList(person) {
         postUser(person)
-            .then(() => setCharacters([...characters, person]))
-            .catch((error) => {
-                console.log(error);
+            .then((res) => {
+            if (res.status === 201) {
+                return res.json();          // get the created user WITH id
+            }
+            return null;                  // non-201: do nothing
             })
+            .then((created) => {
+            if (created) {
+                setCharacters([...characters, created]); // append created (has id)
+            }
+            })
+            .catch((error) => {
+            console.log(error);
+        });
     }
+
 
     function fetchUsers() {
         const promise = fetch("http://localhost:8000/users");
@@ -47,9 +58,11 @@ function MyApp() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(person),
+        }).then((res) => {
+            if (res.status === 201) return res;
+            return Promise.reject(new Error(`Expected 201, got ${res.status}`));
         });
-
-        return promise;
+        return promise
     }
 
     return(
