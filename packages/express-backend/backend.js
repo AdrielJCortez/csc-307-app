@@ -64,8 +64,12 @@ const removeUser = (id) => {
 const findUserById = (id) =>
   users["users_list"].find((user) => user["id"] === id);
 
-const findUserByName = (name, job) =>
-    users["users_list"].filter((u) => u.name === name && u.job === job);
+const findUserByName = (name) =>
+    users["users_list"].filter((u) => u.name === name);
+
+const findUsersByNameAndJob = (name, job) =>
+  users["users_list"].filter(u => u.name === name && u.job === job);
+
 
 const idInUse = (id) => users["users_list"].some(u => u.id === id);
 const generateRandomId = () => {
@@ -85,21 +89,35 @@ app.post("/users", (req, res) => {
     if (!userToAdd.id){
       userToAdd.id = generateRandomId();
     }
-    
+
     addUser(userToAdd);
     return res.status(201).json(userToAdd);
 });
 
 app.get("/users", (req, res) => {
-  const name = req.query.name;
-  if (name != undefined) {
-    let result = findUserByName(name);
-    result = { users_list: result };
-    res.send(result);
-  } else {
-    res.send(users);
+  const { name, job } = req.query;
+
+  if (name && job) {
+    // both provided -> match BOTH
+    return res.json({ users_list: findUsersByNameAndJob(name, job) });
   }
+
+  if (name) {
+    // name only
+    const result = findUserByName(name); // your existing helper
+    return res.json({ users_list: result });
+  }
+
+  if (job) {
+    // job only (optional but nice)
+    const result = users["users_list"].filter(u => u.job === job);
+    return res.json({ users_list: result });
+  }
+
+  // no filters -> all users
+  return res.json(users);
 });
+
 
 app.get("/", (req, res) => {
   res.send("Hello world!");
@@ -116,12 +134,11 @@ app.get("/users/:id", (req, res) => {
 });
 
 app.delete("/users/:id", (req, res) => {
-    const id = req.params.id;
-    const removed = removeUser(id);
-    if (!removed) return res.status(404).send("Resource not found.");
-
-    res.status(200).json(removed)
-})
+  const id = req.params.id;
+  const removed = removeUser(id);
+  if (!removed) return res.status(404).send("Resource not found.");
+  return res.sendStatus(204); // no content on success
+});
 
 app.listen(port, () => {
   console.log(

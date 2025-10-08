@@ -13,11 +13,33 @@ function MyApp() {
     // useState([])
     
     // used to update the characters if we want one of them removed
-    function removeOneCharacter(index){
-        const updated = characters.filter((characters, i) => {
-            return i !== index;
+    function removeOneCharacter(index) {
+        const user = characters[index];
+
+    // if no id (older rows), fall back to local delete
+        if (!user?.id) {
+            const updated = characters.filter((_, i) => i !== index);
+            setCharacters(updated);
+            return;
+        }
+
+        deleteUser(user.id)
+            .then((res) => {
+            if (res.status === 204) {
+                const updated = characters.filter((_, i) => i !== index);
+                setCharacters(updated);
+            } else if (res.status === 404) {
+                console.log("Resource not found on server (no deletion).");
+            } else {
+                console.log("Delete failed with status:", res.status);
+            }
+            })
+            .catch((error) => console.log(error));
+        }
+    function deleteUser(id) {
+        return fetch(`http://localhost:8000/users/${encodeURIComponent(id)}`, {
+            method: "DELETE",
         });
-        setCharacters(updated)
     }
     function updateList(person) {
         postUser(person)
