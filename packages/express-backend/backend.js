@@ -13,135 +13,68 @@
 
 // "http://localhost:8000/users?name=Mac&job=Bouncer"
 
+// packages/express-backend/backend.js
+// packages/express-backend/backend.js
 import express from "express";
 import cors from "cors";
+import services from "./services/user-services.js"; // default import
+
+const { getUsers, findUserById, addUser, deleteUserById } = services;
 
 const app = express();
 const port = 8000;
-const users = {
-  users_list: [
-    {
-      id: "xyz789",
-      name: "Charlie",
-      job: "Janitor"
-    },
-    {
-      id: "abc123",
-      name: "Mac",
-      job: "Bouncer"
-    },
-    {
-      id: "ppp222",
-      name: "Mac",
-      job: "Professor"
-    },
-    {
-      id: "yat999",
-      name: "Dee",
-      job: "Aspring actress"
-    },
-    {
-      id: "zap555",
-      name: "Dennis",
-      job: "Bartender"
-    }
-  ]
-};
-
-const addUser = (user) => {
-    users["users_list"].push(user);
-    return user;
-};
-
-const removeUser = (id) => {
-    const idx = users["users_list"].findIndex(u => u.id === id);
-    if (idx === -1)
-        return null;
-    const [removed] = users["users_list"].splice(idx, 1)
-    return removed;
-}
-
-const findUserById = (id) =>
-  users["users_list"].find((user) => user["id"] === id);
-
-const findUserByName = (name) =>
-    users["users_list"].filter((u) => u.name === name);
-
-const findUsersByNameAndJob = (name, job) =>
-  users["users_list"].filter(u => u.name === name && u.job === job);
-
-
-const idInUse = (id) => users["users_list"].some(u => u.id === id);
-const generateRandomId = () => {
-  let id;
-  do {
-    id = Math.random().toString(36).slice(2, 8);
-  } while (idInUse(id));
-  return id;
-}
-
-app.use(cors())
+app.use(cors());
 app.use(express.json());
 
-app.post("/users", (req, res) => {
-    const userToAdd = req.body;
-
-    if (!userToAdd.id){
-      userToAdd.id = generateRandomId();
-    }
-
-    addUser(userToAdd);
-    return res.status(201).json(userToAdd);
-});
-
+// GET /users (all | ?name= | ?job= | ?name=&job=)
 app.get("/users", (req, res) => {
   const { name, job } = req.query;
-
-  if (name && job) {
-    // both provided -> match BOTH
-    return res.json({ users_list: findUsersByNameAndJob(name, job) });
-  }
-
-  if (name) {
-    // name only
-    const result = findUserByName(name); // your existing helper
-    return res.json({ users_list: result });
-  }
-
-  if (job) {
-    // job only (optional but nice)
-    const result = users["users_list"].filter(u => u.job === job);
-    return res.json({ users_list: result });
-  }
-
-  // no filters -> all users
-  return res.json(users);
+  getUsers(name, job)
+    .then(docs => res.json({ users_list: docs }))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: "Database error" });
+    });
 });
 
-
-app.get("/", (req, res) => {
-  res.send("Hello world!");
-});
-
+// GET /users/:id
 app.get("/users/:id", (req, res) => {
-  const id = req.params["id"]; //or req.params.id
-  let result = findUserById(id);
-  if (result === undefined) {
-    res.status(404).send("Resource not found.");
-  } else {
-    res.send(result);
-  }
+  findUserById(req.params.id)
+    .then(doc => {
+      if (!doc) return res.status(404).send("Resource not found.");
+      res.json(doc);
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(400).send("Invalid id");
+    });
 });
 
+// POST /users (201 + created doc with _id)
+app.post("/users", (req, res) => {
+  const { name, job } = req.body;
+  if (!name || !job) return res.status(400).json({ error: "name and job are required" });
+  addUser({ name, job })
+    .then(doc => res.status(201).json(doc))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: "Database error" });
+    });
+});
+
+// DELETE /users/:id (204 or 404)
 app.delete("/users/:id", (req, res) => {
-  const id = req.params.id;
-  const removed = removeUser(id);
-  if (!removed) return res.status(404).send("Resource not found.");
-  return res.sendStatus(204); // no content on success
+  deleteUserById(req.params.id)
+    .then(doc => {
+      if (!doc) return res.status(404).send("Resource not found.");
+      res.sendStatus(204);
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(400).send("Invalid id");
+    });
 });
 
 app.listen(port, () => {
-  console.log(
-    `Example app listening at http://localhost:${port}`
-  );
+  console.log(`API listening at http://localhost:${port}`);
 });
